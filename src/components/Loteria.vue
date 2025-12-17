@@ -132,9 +132,29 @@
             </v-card>
           </v-overlay>
 
-          <v-divider class="my-6" v-if="sugestoes.length > 0" />
+          <v-divider class="my-6" v-if="sugestoes.length > 0 || carregando" />
 
-          <div v-if="sugestoes.length > 0">
+          <div v-if="carregando">
+            <v-card-title class="text-h5 text-center mb-2">
+              Números Sugeridos
+            </v-card-title>
+            <div class="text-center mb-4">
+              <v-skeleton-loader
+                type="text"
+                width="200"
+                class="mx-auto"
+              />
+            </div>
+            <div class="text-center">
+              <v-skeleton-loader
+                type="text"
+                width="300"
+                class="mx-auto"
+              />
+            </div>
+          </div>
+
+          <div v-else-if="sugestoes.length > 0">
             <v-card-title class="text-h5 text-center mb-2">
               Números Sugeridos
             </v-card-title>
@@ -261,6 +281,8 @@ const gerarSugestoes = async () => {
   const duracao = 5000;
   const intervalo = duracao / quantidadeAleatoria;
 
+  let sugestoesFinais = [];
+
   for (let geracao = 0; geracao < quantidadeAleatoria; geracao++) {
     const sugestoesGeradas = [];
     const disponiveis = [...numerosDisponiveis];
@@ -272,7 +294,7 @@ const gerarSugestoes = async () => {
       disponiveis.splice(indiceAleatorio, 1);
     }
 
-    sugestoes.value = sugestoesGeradas.sort((a, b) => a - b);
+    sugestoesFinais = sugestoesGeradas.sort((a, b) => a - b);
 
     if (geracao < quantidadeAleatoria - 1) {
       const tempoDecorrido = Date.now() - inicio;
@@ -281,6 +303,8 @@ const gerarSugestoes = async () => {
       await new Promise((resolve) => setTimeout(resolve, tempoEspera));
     }
   }
+
+  sugestoes.value = sugestoesFinais;
 
   const tempoDecorrido = Date.now() - inicio;
   const tempoRestante = duracao - tempoDecorrido;
