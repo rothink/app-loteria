@@ -4,7 +4,7 @@
       <v-col cols="12" md="8" lg="6">
         <v-card class="pa-6">
           <v-card-title class="text-h4 text-center mb-6">
-            Sistema de Loteria
+            Sistema de Lotofácil
           </v-card-title>
 
           <v-card-subtitle class="text-center mb-6">
@@ -71,17 +71,9 @@
             <v-card-title class="text-h5 text-center mb-4">
               Números Sugeridos
             </v-card-title>
-            <v-row justify="center">
-              <v-col
-                v-for="(sugestao, index) in sugestoes"
-                :key="index"
-                cols="auto"
-              >
-                <v-chip color="purple" size="large" class="ma-1">
-                  {{ sugestao }}
-                </v-chip>
-              </v-col>
-            </v-row>
+            <div class="text-center text-h6">
+              {{ sugestoesFormatadas }}
+            </div>
           </div>
         </v-card>
       </v-col>
@@ -99,6 +91,10 @@ const mensagemErro = ref("");
 
 const podeGerar = computed(() => {
   return numerosProcessados.value.length === 10;
+});
+
+const sugestoesFormatadas = computed(() => {
+  return sugestoes.value.join(", ");
 });
 
 const processarEntrada = () => {
