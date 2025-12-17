@@ -8,37 +8,57 @@
           </v-card-title>
 
           <v-card-subtitle class="text-center mb-6">
-            Informe 10 números e receba 6 sugestões diferentes
+            Informe 10 números separados por espaço ou vírgula
           </v-card-subtitle>
 
-          <v-form @submit.prevent="gerarSugestoes">
-            <v-row>
-              <v-col
-                v-for="(numero, index) in numeros"
-                :key="index"
-                cols="6"
-                sm="4"
-                md="3"
-              >
-                <v-text-field
-                  v-model.number="numeros[index]"
-                  :label="`Número ${index + 1}`"
-                  type="number"
-                  min="1"
-                  max="60"
-                  variant="outlined"
-                  density="compact"
-                  @input="validarNumero(index)"
-                />
-              </v-col>
-            </v-row>
+          <v-form @submit.prevent="aoClicarGerar">
+            <v-textarea
+              v-model="entradaTexto"
+              label="Números (ex: 01 04 06 07 10 13 19 22 24 25 ou 01,04,06,07,10,13,19,22,24,25)"
+              variant="outlined"
+              rows="3"
+              class="mb-4"
+              @input="processarEntrada"
+            />
+
+            <v-alert
+              v-if="mensagemErro"
+              type="error"
+              density="compact"
+              class="mb-4"
+            >
+              {{ mensagemErro }}
+            </v-alert>
+
+            <v-alert
+              v-if="numerosProcessados.length === 10 && !mensagemErro"
+              type="success"
+              density="compact"
+              class="mb-4"
+            >
+              {{ numerosProcessados.length }} números identificados
+            </v-alert>
+
+            <div v-if="numerosProcessados.length === 10 && !mensagemErro" class="mb-4">
+              <div class="text-subtitle-2 mb-2">Números identificados:</div>
+              <div class="d-flex flex-wrap">
+                <v-chip
+                  v-for="(numero, index) in numerosProcessados"
+                  :key="index"
+                  color="primary"
+                  size="small"
+                  class="ma-1"
+                >
+                  {{ numero.toString().padStart(2, "0") }}
+                </v-chip>
+              </div>
+            </div>
 
             <v-btn
               type="submit"
               color="primary"
               size="large"
               block
-              class="mt-4"
               :disabled="!podeGerar"
             >
               Gerar Sugestões
@@ -72,35 +92,82 @@
 <script setup>
 import { ref, computed } from "vue";
 
-const numeros = ref([...Array(10)].map(() => null));
+const entradaTexto = ref("");
+const numerosProcessados = ref([]);
 const sugestoes = ref([]);
+const mensagemErro = ref("");
 
 const podeGerar = computed(() => {
-  const numerosValidos = numeros.value.filter(
-    (n) => n !== null && n >= 1 && n <= 60
-  );
-  const numerosUnicos = new Set(numerosValidos);
-  return numerosValidos.length === 10 && numerosUnicos.size === 10;
+  return numerosProcessados.value.length === 10;
 });
 
-const validarNumero = (index) => {
-  const valor = numeros.value[index];
-  if (valor !== null) {
-    if (valor < 1) {
-      numeros.value[index] = 1;
-    } else if (valor > 60) {
-      numeros.value[index] = 60;
+const processarEntrada = () => {
+  mensagemErro.value = "";
+  numerosProcessados.value = [];
+
+  if (!entradaTexto.value.trim()) {
+    return;
+  }
+
+  let texto = entradaTexto.value.trim();
+
+  texto = texto.replace(/,/g, " ");
+
+  const partes = texto.split(/\s+/).filter((p) => p.trim());
+
+  const numeros = [];
+
+  for (const parte of partes) {
+    const numero = parseInt(parte.trim(), 10);
+
+    if (isNaN(numero)) {
+      continue;
     }
+
+    if (numero < 1 || numero > 25) {
+      mensagemErro.value = `Número ${numero} fora do intervalo válido (1-25)`;
+      numerosProcessados.value = [];
+      return;
+    }
+
+    if (numeros.includes(numero)) {
+      mensagemErro.value = `Número ${numero} duplicado`;
+      numerosProcessados.value = [];
+      return;
+    }
+
+    numeros.push(numero);
+  }
+
+  if (numeros.length < 10) {
+    mensagemErro.value = `Foram encontrados apenas ${numeros.length} números. Informe exatamente 10 números.`;
+    numerosProcessados.value = [];
+    return;
+  }
+
+  if (numeros.length > 10) {
+    mensagemErro.value = `Foram encontrados ${numeros.length} números. Informe exatamente 10 números.`;
+    numerosProcessados.value = [];
+    return;
+  }
+
+  numerosProcessados.value = numeros.sort((a, b) => a - b);
+};
+
+const aoClicarGerar = () => {
+  processarEntrada();
+  if (podeGerar.value) {
+    gerarSugestoes();
   }
 };
 
 const gerarSugestoes = () => {
   if (!podeGerar.value) return;
 
-  const numerosInformados = new Set(numeros.value);
+  const numerosInformados = new Set(numerosProcessados.value);
   const numerosDisponiveis = [];
 
-  for (let i = 1; i <= 60; i++) {
+  for (let i = 1; i <= 25; i++) {
     if (!numerosInformados.has(i)) {
       numerosDisponiveis.push(i);
     }
